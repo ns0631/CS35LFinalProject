@@ -1,20 +1,31 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import FirstPage from './screens/FirstPage';
+//import FirstPage from './screens/FirstPage';
 import Login from './screens/Login';
 import Register from './screens/Register';
+import HomeScreen from './screens/HomeScreen';
+import ShareRide from './screens/ShareRide';
+import FindRide from './screens/FindRide';
+import ViewRides from './screens/ViewRides';
+import ViewProfile from './screens/ViewProfile';
+
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="FirstPage">
-        <Stack.Screen name="FirstPage" component={FirstPage} options={{ title: 'Welcome' }} />
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="Register" component={Register} />
-      </Stack.Navigator>
+      <Stack.Navigator initialRouteName="Home">
+      <Stack.Screen name="Home" component={HomeScreen} />
+{/* <Stack.Screen name="FirstPage" component={FirstPage} options={{ title: 'Welcome' }} /> */}
+<Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Register" component={Register} />
+      <Stack.Screen name="ShareRide" component={ShareRide} />
+      <Stack.Screen name="FindRide" component={FindRide} />
+      <Stack.Screen name="ViewRides" component={ViewRides} />
+      <Stack.Screen name="ViewProfile" component={ViewProfile} />
+    </Stack.Navigator>
     </NavigationContainer>
   );
 }

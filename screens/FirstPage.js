@@ -1,4 +1,4 @@
-import React from 'react';
+/* import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function FirstPage({ navigation }) {
@@ -28,3 +28,5 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: 'white', fontSize: 16 },
 });
+
+*/
