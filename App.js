@@ -9,6 +9,8 @@ import ShareRide from './screens/ShareRide';
 import FindRide from './screens/FindRide';
 import ViewRides from './screens/ViewRides';
 import ViewProfile from './screens/ViewProfile';
+import EditProfile from './screens/EditProfile.js';
+
 
 
 const Stack = createNativeStackNavigator();
@@ -25,6 +27,8 @@ export default function App() {
       <Stack.Screen name="FindRide" component={FindRide} />
       <Stack.Screen name="ViewRides" component={ViewRides} />
       <Stack.Screen name="ViewProfile" component={ViewProfile} />
+      <Stack.Screen name="EditProfile" component={EditProfile} />
+
     </Stack.Navigator>
     </NavigationContainer>
   );

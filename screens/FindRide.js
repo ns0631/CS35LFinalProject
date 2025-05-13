@@ -35,17 +35,17 @@ export default function FindRide({ navigation }) {
       <Text style={styles.title}>Find a Ride</Text>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Origin Address</Text>
+        <Text style={styles.label}>Departure Address</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter origin"
+          placeholder="Enter departure address"
           value={origin}
           onChangeText={setOrigin}
         />
       </View>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Origin Radius (miles)</Text>
+        <Text style={styles.label}>Depature Radius (miles)</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g. 5"

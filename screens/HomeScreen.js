@@ -19,9 +19,10 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.buttonText}>View My Rides</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('ViewProfile')}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('EditProfile')}>
           <Text style={styles.buttonText}>My Profile</Text>
         </TouchableOpacity>
+
       </View>
     </View>
   );

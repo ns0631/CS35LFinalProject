@@ -24,20 +24,20 @@ export default function ShareRide({ navigation }) {
       <Text style={styles.title}>Share a Ride</Text>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Pickup Location</Text>
+        <Text style={styles.label}>Departure Address</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter pickup location"
+          placeholder="Enter departure address"
           value={pickup}
           onChangeText={setPickup}
         />
       </View>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Drop-off Location</Text>
+        <Text style={styles.label}>Destination Address</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter drop-off location"
+          placeholder="Enter destination address"
           value={dropoff}
           onChangeText={setDropoff}
         />
