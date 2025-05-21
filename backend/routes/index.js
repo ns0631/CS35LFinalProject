@@ -4,12 +4,14 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import rideRoutes from './rideRoutes.js'
+import userRoutes from './userRoutes.js'
 
 dotenv.config();
 
 const router = express.Router();
 
 router.use('/rides', rideRoutes);
+router.use('/users', userRoutes);
 
 router.get('/', (req, res) => {
   res.send("Hello World! This is the API, which will be for the frontend to communicate with the backend.");
