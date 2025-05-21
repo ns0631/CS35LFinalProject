@@ -12,8 +12,8 @@ const app = express();
 
 
 
-app.use(bodyParser.urlencoded({ extended: false })); // parse application/x-www-form-urlencoded
-app.use(bodyParser.json()); // parse application/json
+app.use(bodyParser.urlencoded({ extended: false, limit : '5mb' })); // parse application/x-www-form-urlencoded
+app.use(bodyParser.json({ limit: '5mb'})); // parse application/json
 
 // use it before all route definitions
 app.use(cors({
