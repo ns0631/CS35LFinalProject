@@ -18,7 +18,6 @@ const UserSchema = new mongoose.Schema({
     },
 
     number: String,
-    photo: String,
 
     ratings: {
         driver: [Number],
