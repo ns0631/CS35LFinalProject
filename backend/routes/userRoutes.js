@@ -1,4 +1,4 @@
-import express from 'express';
+port express from 'express';
 import { createUser, deleteUser, verifyUser } from '../controllers/userController.js';
 
 const router = express.Router();

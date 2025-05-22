@@ -11,4 +11,9 @@ const RideSchema = new mongoose.Schema({
 
 });
 
+// Static method to find a ride by its ID
+RideSchema.statics.findByRideId = async function (rideId) {
+    return await this.findById(rideId).populate('driver passengers');
+};
+
 export default mongoose.model('Ride', RideSchema);
