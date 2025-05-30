@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function ShareRide({ navigation }) {
@@ -20,48 +20,50 @@ export default function ShareRide({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Share a Ride</Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Share a Ride</Text>
 
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Departure Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter departure address"
-          value={pickup}
-          onChangeText={setPickup}
-        />
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Destination Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter destination address"
-          value={dropoff}
-          onChangeText={setDropoff}
-        />
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Date & Time</Text>
-        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
-          <Text>{date.toLocaleString()}</Text>
-        </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="datetime"
-            display="default"
-            onChange={onChangeDate}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Departure Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter departure address"
+            value={pickup}
+            onChangeText={setPickup}
           />
-        )}
-      </View>
+        </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Share Ride</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Destination Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter destination address"
+            value={dropoff}
+            onChangeText={setDropoff}
+          />
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Date & Time</Text>
+          <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
+            <Text>{date.toLocaleString()}</Text>
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={date}
+              mode="datetime"
+              display="default"
+              onChange={onChangeDate}
+            />
+          )}
+        </View>
+
+        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          <Text style={styles.buttonText}>Share Ride</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 

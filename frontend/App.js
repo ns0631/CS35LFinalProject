@@ -10,6 +10,7 @@ import FindRide from './screens/FindRide';
 import ViewRides from './screens/ViewRides';
 import ViewProfile from './screens/ViewProfile';
 import EditProfile from './screens/EditProfile.js';
+import FindRide2 from './screens/FindRide2';
 
 
 
@@ -28,6 +29,7 @@ export default function App() {
       <Stack.Screen name="ViewRides" component={ViewRides} />
       <Stack.Screen name="ViewProfile" component={ViewProfile} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
+      <Stack.Screen name="FindRide2" component={FindRide2} />
 
     </Stack.Navigator>
     </NavigationContainer>

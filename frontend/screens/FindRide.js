@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function FindRide({ navigation }) {
@@ -19,102 +19,104 @@ export default function FindRide({ navigation }) {
   };
 
   const handleSubmit = () => {
-    console.log({
+    navigation.navigate('FindRide2', {
       origin,
       originRadius,
       destination,
       destinationRadius,
-      leaveTime,
-      timeRange: `${timeRangeHours}h ${timeRangeMinutes}m`
+      leaveTime: leaveTime.toISOString(),
+      timeRangeHours,
+      timeRangeMinutes
     });
-    navigation.goBack();
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Find a Ride</Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Find a Ride</Text>
 
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Departure Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter departure address"
-          value={origin}
-          onChangeText={setOrigin}
-        />
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Depature Radius (miles)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 5"
-          keyboardType="numeric"
-          value={originRadius}
-          onChangeText={setOriginRadius}
-        />
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Destination Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter destination"
-          value={destination}
-          onChangeText={setDestination}
-        />
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Destination Radius (miles)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 10"
-          keyboardType="numeric"
-          value={destinationRadius}
-          onChangeText={setDestinationRadius}
-        />
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Time Leaving</Text>
-        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
-          <Text>{leaveTime.toLocaleString()}</Text>
-        </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker
-            value={leaveTime}
-            mode="datetime"
-            display="default"
-            onChange={onChangeDate}
-          />
-        )}
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Time Range</Text>
-        <View style={styles.inlineInputs}>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Departure Address</Text>
           <TextInput
-            style={styles.halfInput}
-            placeholder="Hours"
-            keyboardType="numeric"
-            value={timeRangeHours}
-            onChangeText={setTimeRangeHours}
-          />
-          <TextInput
-            style={styles.halfInput}
-            placeholder="Minutes"
-            keyboardType="numeric"
-            value={timeRangeMinutes}
-            onChangeText={setTimeRangeMinutes}
+            style={styles.input}
+            placeholder="Enter departure address"
+            value={origin}
+            onChangeText={setOrigin}
           />
         </View>
-      </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Find Ride</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Depature Radius (miles)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 5"
+            keyboardType="numeric"
+            value={originRadius}
+            onChangeText={setOriginRadius}
+          />
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Destination Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter destination"
+            value={destination}
+            onChangeText={setDestination}
+          />
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Destination Radius (miles)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 10"
+            keyboardType="numeric"
+            value={destinationRadius}
+            onChangeText={setDestinationRadius}
+          />
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Time Leaving</Text>
+          <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
+            <Text>{leaveTime.toLocaleString()}</Text>
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={leaveTime}
+              mode="datetime"
+              display="default"
+              onChange={onChangeDate}
+            />
+          )}
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Time Range</Text>
+          <View style={styles.inlineInputs}>
+            <TextInput
+              style={styles.halfInput}
+              placeholder="Hours"
+              keyboardType="numeric"
+              value={timeRangeHours}
+              onChangeText={setTimeRangeHours}
+            />
+            <TextInput
+              style={styles.halfInput}
+              placeholder="Minutes"
+              keyboardType="numeric"
+              value={timeRangeMinutes}
+              onChangeText={setTimeRangeMinutes}
+            />
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          <Text style={styles.buttonText}>Find Ride</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 
