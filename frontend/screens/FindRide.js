@@ -1,6 +1,95 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { GOOGLE_MAPS_API_KEY } from '@env';
+
+// Address validation function using Google Geocoding API
+const validateAddress = async (address) => {
+  if (!address || address.length < 5) return null;
+  
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`
+    );
+    const data = await response.json();
+    
+    if (data.status === 'OK' && data.results.length > 0) {
+      return {
+        isValid: true,
+        formattedAddress: data.results[0].formatted_address,
+        location: data.results[0].geometry.location
+      };
+    }
+    return { isValid: false };
+  } catch (error) {
+    console.error('Address validation error:', error);
+    return null;
+  }
+};
+
+// Custom Address Input component with validation
+const AddressInput = ({ placeholder, onAddressChange, value }) => {
+  const [isValidating, setIsValidating] = useState(false);
+  const [isValid, setIsValid] = useState(null);
+  const [validationTimeout, setValidationTimeout] = useState(null);
+
+  const handleAddressChange = (text) => {
+    onAddressChange(text);
+    setIsValid(null);
+    
+    // Clear previous timeout
+    if (validationTimeout) {
+      clearTimeout(validationTimeout);
+    }
+    
+    // Set new timeout for validation (debounce)
+    const timeout = setTimeout(async () => {
+      if (text.length > 5) {
+        setIsValidating(true);
+        const result = await validateAddress(text);
+        setIsValidating(false);
+        
+        if (result) {
+          setIsValid(result.isValid);
+          if (result.isValid && result.formattedAddress !== text) {
+            // Optionally update with formatted address
+            onAddressChange(result.formattedAddress);
+          }
+        }
+      }
+    }, 1000);
+    
+    setValidationTimeout(timeout);
+  };
+
+  const getInputStyle = () => {
+    let style = [styles.input];
+    if (isValid === true) {
+      style.push(styles.validInput);
+    } else if (isValid === false) {
+      style.push(styles.invalidInput);
+    }
+    return style;
+  };
+
+  return (
+    <View style={styles.addressInputContainer}>
+      <TextInput
+        style={getInputStyle()}
+        placeholder={placeholder}
+        value={value}
+        onChangeText={handleAddressChange}
+        autoCapitalize="words"
+        autoCorrect={false}
+      />
+      <View style={styles.validationIndicator}>
+        {isValidating && <ActivityIndicator size="small" color="#003f5c" />}
+        {isValid === true && <Text style={styles.validText}>✓ Valid</Text>}
+        {isValid === false && <Text style={styles.invalidText}>⚠ Invalid address</Text>}
+      </View>
+    </View>
+  );
+};
 
 export default function FindRide({ navigation }) {
   const [origin, setOrigin] = useState('');
@@ -11,6 +100,19 @@ export default function FindRide({ navigation }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [timeRangeHours, setTimeRangeHours] = useState('');
   const [timeRangeMinutes, setTimeRangeMinutes] = useState('');
+  const [isApiKeyValid, setIsApiKeyValid] = useState(false);
+
+  useEffect(() => {
+    // Validate API key on component mount
+    if (!GOOGLE_MAPS_API_KEY) {
+      Alert.alert(
+        'Configuration Error',
+        'Google Maps API key is not configured properly. Please check your environment variables.'
+      );
+    } else {
+      setIsApiKeyValid(true);
+    }
+  }, []);
 
   const onChangeDate = (event, selectedDate) => {
     const currentDate = selectedDate || leaveTime;
@@ -18,11 +120,30 @@ export default function FindRide({ navigation }) {
     setLeaveTime(currentDate);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!origin || !destination) {
+      Alert.alert('Error', 'Please enter both departure and destination addresses');
+      return;
+    }
+
+    // Validate addresses before submitting
+    const originValidation = await validateAddress(origin);
+    const destinationValidation = await validateAddress(destination);
+
+    if (!originValidation || !originValidation.isValid) {
+      Alert.alert('Invalid Address', 'Please enter a valid departure address');
+      return;
+    }
+
+    if (!destinationValidation || !destinationValidation.isValid) {
+      Alert.alert('Invalid Address', 'Please enter a valid destination address');
+      return;
+    }
+
     console.log({
-      origin,
+      origin: originValidation.formattedAddress,
       originRadius,
-      destination,
+      destination: destinationValidation.formattedAddress,
       destinationRadius,
       leaveTime,
       timeRange: `${timeRangeHours}h ${timeRangeMinutes}m`
@@ -30,22 +151,30 @@ export default function FindRide({ navigation }) {
     navigation.goBack();
   };
 
+  if (!isApiKeyValid) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Google Maps API is not configured properly.</Text>
+        <Text style={styles.errorText}>Please check your .env file and restart the app.</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.container}>
       <Text style={styles.title}>Find a Ride</Text>
 
       <View style={styles.fieldGroup}>
         <Text style={styles.label}>Departure Address</Text>
-        <TextInput
-          style={styles.input}
+        <AddressInput
           placeholder="Enter departure address"
+          onAddressChange={setOrigin}
           value={origin}
-          onChangeText={setOrigin}
         />
       </View>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Depature Radius (miles)</Text>
+        <Text style={styles.label}>Departure Radius (miles)</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g. 5"
@@ -57,11 +186,10 @@ export default function FindRide({ navigation }) {
 
       <View style={styles.fieldGroup}>
         <Text style={styles.label}>Destination Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter destination"
+        <AddressInput
+          placeholder="Enter destination address"
+          onAddressChange={setDestination}
           value={destination}
-          onChangeText={setDestination}
         />
       </View>
 
@@ -114,18 +242,21 @@ export default function FindRide({ navigation }) {
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Find Ride</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollContainer: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  container: {
     paddingTop: 40,
     paddingBottom: 40,
     paddingHorizontal: 20,
     alignItems: 'center',
-    backgroundColor: '#fff',
+    minHeight: '100%',
   },
   title: {
     fontSize: 24,
@@ -151,7 +282,32 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: '#f9f9f9',
     width: '100%',
-    marginBottom: 10,
+  },
+  validInput: {
+    borderColor: '#4CAF50',
+    backgroundColor: '#f8fff8',
+  },
+  invalidInput: {
+    borderColor: '#f44336',
+    backgroundColor: '#fff8f8',
+  },
+  addressInputContainer: {
+    width: '100%',
+  },
+  validationIndicator: {
+    marginTop: 5,
+    height: 20,
+    justifyContent: 'center',
+  },
+  validText: {
+    color: '#4CAF50',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  invalidText: {
+    color: '#f44336',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   inlineInputs: {
     flexDirection: 'row',
@@ -178,5 +334,11 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
