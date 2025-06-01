@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BACKEND_URL } from '@env';
 import { 
   View, 
   Text, 
@@ -76,29 +77,34 @@ export default function EditProfile({ navigation }) {
       return;
     }
 
-    // Check if email was changed
-    const emailChanged = email.toLowerCase().trim() !== user.email.toLowerCase();
-    
-    if (emailChanged) {
-      Alert.alert(
-        'Email Change Detected',
-        'Changing your email address will require re-verification. Continue?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Continue', onPress: () => saveProfile(true) }
-        ]
-      );
-    } else {
-      saveProfile(false);
-    }
+    saveProfile();
   };
 
-  const saveProfile = async (emailChanged) => {
+  async function saveProfile(){
+    
     setIsLoading(true);
-
+    
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // update API call
+      console.log(BACKEND_URL + "/api/users/editprofile");
+      let serverResponse = await fetch(BACKEND_URL + "/api/users/editprofile", {
+          method: 'POST',
+          'credentials': 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({email: email, firstName: firstName, lastName: lastName, phone: phone})
+      });
+      
+      const responseText = await serverResponse.text();
+      console.log(responseText);
+      const responseJSON = JSON.parse(responseText);
+      console.log(responseJSON);
+      
+      if(!responseJSON.success){
+        throw new Error("Login failed.");
+      }
 
       // Create updated user data
       const updatedUser = {
@@ -108,8 +114,6 @@ export default function EditProfile({ navigation }) {
         email: email.toLowerCase().trim(),
         phone: phone.trim(),
         updatedAt: new Date().toISOString(),
-        // If email changed, mark as unverified
-        ...(emailChanged && { isEmailVerified: false })
       };
 
       // Update user data in auth context
@@ -117,9 +121,7 @@ export default function EditProfile({ navigation }) {
 
       Alert.alert(
         'Profile Updated',
-        emailChanged 
-          ? 'Your profile has been updated. Please check your new email for verification.'
-          : 'Your profile has been updated successfully!',
+        'Your profile has been updated successfully!',
         [
           { 
             text: 'OK', 
@@ -198,6 +200,7 @@ export default function EditProfile({ navigation }) {
                 onChangeText={setFirstName}
                 placeholder="First name"
                 autoCapitalize="words"
+                placeholderTextColor="#A9A9A9"
               />
             </View>
             <View style={styles.nameInputContainer}>
@@ -208,24 +211,29 @@ export default function EditProfile({ navigation }) {
                 onChangeText={setLastName}
                 placeholder="Last name"
                 autoCapitalize="words"
+                placeholderTextColor="#A9A9A9"
               />
             </View>
           </View>
 
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>UCLA Email</Text>
-            <TextInput
-              style={[
-                styles.input,
-                email && !isValidUCLAEmail(email) && styles.inputError
-              ]}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="your.name@ucla.edu"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.disabledfield,
+                  email && !isValidUCLAEmail(email) && styles.inputError,
+                  
+                ]}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="your.name@ucla.edu"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholderTextColor="#A9A9A9"
+                disabled={true}
+              />
             {email && !isValidUCLAEmail(email) && (
               <Text style={styles.errorText}>Must be a valid UCLA email (@ucla.edu or @g.ucla.edu)</Text>
             )}
@@ -240,8 +248,9 @@ export default function EditProfile({ navigation }) {
               style={styles.input}
               value={phone}
               onChangeText={setPhone}
-              placeholder="(555) 123-4567"
+              placeholder="Enter your phone number here"
               keyboardType="phone-pad"
+              placeholderTextColor="#A9A9A9"
             />
           </View>
 
@@ -380,6 +389,9 @@ const styles = StyleSheet.create({
   inputError: {
     borderColor: '#ff3333',
     backgroundColor: '#fff5f5',
+  },
+  disabledfield: {
+    color: "#A9A9A9"
   },
   errorText: {
     color: '#ff3333',

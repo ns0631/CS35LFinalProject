@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BACKEND_URL } from '@env';
 import { 
   StatusBar,
   StyleSheet, 
@@ -27,12 +28,6 @@ export default function Login({ navigation }) {
     setIsLoading(true);
 
     try {
-      // Simulate login API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // For demo purposes, accept any email/password combination
-      // In a real app, this would verify against your backend
-      
       // Check if it's a UCLA email
       const uclaEmailRegex = /^[a-zA-Z0-9._%+-]+@(ucla\.edu|g\.ucla\.edu)$/;
       if (!uclaEmailRegex.test(email.toLowerCase())) {
@@ -40,18 +35,26 @@ export default function Login({ navigation }) {
         setIsLoading(false);
         return;
       }
+      
+      // login API call
+      let serverResponse = await fetch("http://localhost:8000/api/users/login", {
+        method: 'POST',
+        'credentials': 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({email: email, password: password})
+      });
 
-      // Mock user data - in real app this would come from backend
-      const userData = {
-        id: '12345',
-        firstName: 'UCLA',
-        lastName: 'Student',
-        email: email.toLowerCase().trim(),
-        isEmailVerified: true,
-        loginAt: new Date().toISOString()
-      };
+      const responseText = await serverResponse.text();
+      const responseJSON = JSON.parse(responseText);
 
-      await login(userData);
+      if(!responseJSON.success){
+        throw new Error("Login failed.");
+      }
+
+      await login(responseJSON.data);
       
     } catch (error) {
       Alert.alert('Login Failed', 'Invalid email or password. Please try again.');
@@ -76,11 +79,12 @@ export default function Login({ navigation }) {
             style={styles.inputField}
             onChangeText={setEmail}
             value={email}
-            placeholder="your.name@ucla.edu"
+            placeholder="Enter your UCLA email address"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="next"
+            placeholderTextColor="#A9A9A9"
           />
         </View>
 
@@ -94,6 +98,7 @@ export default function Login({ navigation }) {
             secureTextEntry={true}
             returnKeyType="done"
             onSubmitEditing={handleLogin}
+            placeholderTextColor="#A9A9A9"
           />
         </View>
 
@@ -114,11 +119,6 @@ export default function Login({ navigation }) {
           <TouchableOpacity onPress={navigateToSignup}>
             <Text style={styles.signupLinkText}>Sign Up</Text>
           </TouchableOpacity>
-        </View>
-
-        <View style={styles.demoInfo}>
-          <Text style={styles.demoTitle}>Demo Login:</Text>
-          <Text style={styles.demoText}>Use any UCLA email (@ucla.edu) and any password</Text>
         </View>
       </View>
       <StatusBar style="auto" />

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BACKEND_URL } from '@env';
 import { 
   StatusBar, 
   StyleSheet, 
@@ -84,18 +85,26 @@ export default function Signup({ navigation }) {
     setIsLoading(true);
 
     try {
-      // Simulate account creation API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // account creation API call
+      let serverResponse = await fetch(BACKEND_URL + "/api/users/signup", {
+        method: 'PUT',
+        'credentials': 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({email: email, password: password, firstName: firstName, lastName: lastName})
+      });
+
+      const responseText = await serverResponse.text();
+      const responseJSON = JSON.parse(responseText);
+
+      if(!responseJSON.success){
+        Alert.alert('Sign Up Failed', 'Username has been taken. Please try again.');
+        return;
+      }
       
-      // Create user data object
-      const userData = {
-        id: Date.now().toString(), // In real app, this would come from backend
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.toLowerCase().trim(),
-        createdAt: new Date().toISOString(),
-        isEmailVerified: false
-      };
+      const userData = responseJSON.data;
 
       // Navigate to email verification
       navigation.navigate('EmailVerification', {
@@ -133,6 +142,7 @@ export default function Signup({ navigation }) {
                 placeholder="First name"
                 autoCapitalize="words"
                 returnKeyType="next"
+                placeholderTextColor="#A9A9A9"
               />
             </View>
             <View style={styles.nameInputContainer}>
@@ -144,6 +154,7 @@ export default function Signup({ navigation }) {
                 placeholder="Last name"
                 autoCapitalize="words"
                 returnKeyType="next"
+                placeholderTextColor="#A9A9A9"
               />
             </View>
           </View>
@@ -162,6 +173,7 @@ export default function Signup({ navigation }) {
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="next"
+              placeholderTextColor="#A9A9A9"
             />
             {email && !isValidUCLAEmail(email) && (
               <Text style={styles.errorText}>Must be a valid UCLA email (@ucla.edu or @g.ucla.edu)</Text>
@@ -182,6 +194,7 @@ export default function Signup({ navigation }) {
               returnKeyType="next"
               onFocus={() => setShowPasswordRequirements(true)}
               onBlur={() => setShowPasswordRequirements(false)}
+              placeholderTextColor="#A9A9A9"
             />
             {(showPasswordRequirements || (password && !passwordValidation.isValid)) && (
               <View style={styles.passwordRequirements}>
@@ -206,6 +219,7 @@ export default function Signup({ navigation }) {
               secureTextEntry={true}
               returnKeyType="done"
               onSubmitEditing={handleSignup}
+              placeholderTextColor="#A9A9A9"
             />
             {confirmPassword && password !== confirmPassword && (
               <Text style={styles.errorText}>Passwords do not match</Text>

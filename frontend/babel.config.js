@@ -8,7 +8,7 @@ module.exports = function(api) {
         path: '.env.local',       // you can keep .env.local
         safe: false,              // ← turn off “safe” mode
         allowUndefined: false,    // ← error if you typo your var
-        whitelist: ['GOOGLE_MAPS_API_KEY'],  // ← explicitly allow this key
+        whitelist: ['GOOGLE_MAPS_API_KEY', 'BACKEND_URL'],  // ← explicitly allow this key
       }]
     ]
   };

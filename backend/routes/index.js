@@ -11,7 +11,7 @@ dotenv.config();
 const router = express.Router();
 
 router.use('/rides', rideRoutes);
-router.use('/user', userRoutes);
+router.use('/users', userRoutes);
 
 
 router.get('/', (req, res) => {
