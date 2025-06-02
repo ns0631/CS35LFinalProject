@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert, TextInput, ActivityIndicator } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { GOOGLE_MAPS_API_KEY } from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { BACKEND_URL } from '@env';
 
 // Address validation function using Google Geocoding API
 const validateAddress = async (address) => {
@@ -12,6 +15,10 @@ const validateAddress = async (address) => {
       `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`
     );
     const data = await response.json();
+
+    console.log(GOOGLE_MAPS_API_KEY);
+
+    console.log(data);
     
     if (data.status === 'OK' && data.results.length > 0) {
       return {
@@ -140,11 +147,34 @@ export default function ShareRide({ navigation }) {
       return;
     }
 
+    let userData = JSON.parse(await AsyncStorage.getItem('userToken'));
+    let token = await userData['token'];
+    delete userData['token'];
+    // update API call
+    console.log(BACKEND_URL + "/api/rides/create");
+    let serverResponse = await fetch(BACKEND_URL + "/api/rides/create", {
+      method: 'POST',
+      headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization':  "" + token
+        },
+        body: JSON.stringify({origin: pickupValidation.formattedAddress, destination: dropoffValidation.formattedAddress, driver: userData, timeLeaving: date})
+    });
+      
+    const responseText = await serverResponse.text();
+    const responseJSON = JSON.parse(responseText);
+    if(!responseJSON.success){
+      Alert.alert('Rideshare Failed', 'Ride share failed. Please try again.');
+      return;
+    }
+
     console.log('Ride Shared:', { 
       pickup: pickupValidation.formattedAddress, 
       dropoff: dropoffValidation.formattedAddress, 
       date 
     });
+    Alert.alert('Ride Shared', `Pickup: ${pickupValidation.formattedAddress}\nDropoff: ${dropoffValidation.formattedAddress}\nDate/time: ${date}`);
     navigation.goBack();
   };
 

@@ -13,6 +13,9 @@ import {
 } from 'react-native';
 import { useAuth } from '../App';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
 // UCLA email validation function
 const isValidUCLAEmail = (email) => {
   const uclaEmailRegex = /^[a-zA-Z0-9._%+-]+@(ucla\.edu|g\.ucla\.edu)$/;
@@ -85,22 +88,23 @@ export default function EditProfile({ navigation }) {
     setIsLoading(true);
     
     try {
+      const userData = JSON.parse(await AsyncStorage.getItem('userToken'));
+      const token = await userData['token'];
       // update API call
       console.log(BACKEND_URL + "/api/users/editprofile");
       let serverResponse = await fetch(BACKEND_URL + "/api/users/editprofile", {
           method: 'POST',
-          'credentials': 'include',
+          //'credentials': 'include',
           headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization':  "" + token
           },
           body: JSON.stringify({email: email, firstName: firstName, lastName: lastName, phone: phone})
       });
       
       const responseText = await serverResponse.text();
-      console.log(responseText);
       const responseJSON = JSON.parse(responseText);
-      console.log(responseJSON);
       
       if(!responseJSON.success){
         throw new Error("Login failed.");

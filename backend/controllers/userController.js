@@ -1,7 +1,6 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import dayjs from 'dayjs';
 import bcrypt from 'bcrypt';
 
 process.env.SECRET_KEY = crypto.randomBytes(256).toString('hex');
@@ -23,6 +22,11 @@ export const createUser = async (req, res) => {
                 userData.createdAt = new Date();
                 const user = new User(userData);
                 await user.save();
+
+                userData = user.toObject();
+                delete userData['password'];
+                console.log(userData);
+
                 res.status(201).json({message: 'User Created', success: true, data: user});
             } else {
                 res.status(403).json({message: 'Username unavailable', success: false});
@@ -36,20 +40,6 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
     try {
-        const token = req.cookies.jwt;
-        if (token == null){
-            console.log("JWT missing");
-            return res.status(403).json({message: "JWT missing", success: false});
-        } else{
-            jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
-                if (err){
-                    console.log("Error: " + err);
-                    return res.status(401).json({message: 'Authentication failed', success: false});
-                }
-            });
-        }
-
-
         if(!req.body.email || !req.body.firstName || !req.body.lastName || !req.body.phone){
             return res.status(400).json({success: false, message: "Request missing first name, last name, email, or phone"});
         }
@@ -62,7 +52,14 @@ export const updateUser = async (req, res) => {
         user.lastName = req.body.lastName;
         user.phone = req.body.phone;
         user.save()
-        return res.status(200).json({message: 'Info updated', success: true, data: user});
+
+        const token = req.headers.authorization;
+        let userData = user.toObject();
+        delete userData['password'];
+        userData['token'] = token;
+        console.log(userData);
+
+        return res.status(200).json({message: 'Info updated', success: true, data: userData});
     }
     catch (err) {
         res.status(400).json({ message: err.message });
@@ -88,13 +85,13 @@ export const verifyUser = async (req, res) => {
             } 
             if (result){
                 const token = generateAccessToken({ username: email });
+                
+                let userData = user.toObject();
+                delete userData['password'];
+                userData['token'] = token;
+                console.log(userData);
 
-                res.cookie("jwt", token, {
-                    httpOnly: true,
-                    expires: dayjs().add(30, "minutes").toDate()
-                });
-
-                res.status(200).json({success: true, message: "User authenticated", token: token, data: user});
+                res.status(200).json({success: true, message: "User authenticated", token: token, data: userData});
             } else{
                 res.status(401).json({success: false, message: "Invalid password"});
             }

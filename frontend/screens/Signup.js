@@ -88,7 +88,6 @@ export default function Signup({ navigation }) {
       // account creation API call
       let serverResponse = await fetch(BACKEND_URL + "/api/users/signup", {
         method: 'PUT',
-        'credentials': 'include',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'

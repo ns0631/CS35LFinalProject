@@ -6,10 +6,10 @@ export const createRide = async (req, res) => {
         console.log(req.body);
         const ride = new Ride(req.body);
         await ride.save();
-        res.status(201).json(ride);
+        res.status(201).json({ message: 'Ride created', success: true, data: ride});
     }
     catch (err){
-        res.status(400).json({ message : err.message});
+        res.status(400).json({ message : err.message, success: false});
     }
 };
 

@@ -37,9 +37,8 @@ export default function Login({ navigation }) {
       }
       
       // login API call
-      let serverResponse = await fetch("http://localhost:8000/api/users/login", {
+      let serverResponse = await fetch(BACKEND_URL + "/api/users/login", {
         method: 'POST',
-        'credentials': 'include',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'

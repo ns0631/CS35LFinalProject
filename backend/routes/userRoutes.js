@@ -3,18 +3,16 @@ import { createUser, deleteUser, verifyUser, updateUser } from '../controllers/u
 import jwt from 'jsonwebtoken';
 
 function authenticateToken(req, res, next) {
-    console.log("here");
-    if(!req.cookies.jwt){
+    const token = req.headers.authorization;
+    if(token == null){
         console.log("JWT missing");
         return res.status(403).json({message: "JWT missing", sucesss: false});
     }
-    const token = req.cookies.jwt;
   
-    jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
-      console.log(err);
-  
+    jwt.verify(token, process.env.SECRET_KEY, (err, user) => {  
       if (err){
         console.log("Bad JWT");
+        console.log(err);
         return res.status(401).json({message: "Bad JWT", sucesss: false});
       }
   
