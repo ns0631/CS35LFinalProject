@@ -1,6 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { createRide, getAllRides, getRideById, joinRide, deleteRideById } from '../controllers/rideController.js';
+import { createRide, getAllRides, getRideById, joinRide, deleteRideById, getRidesAfterDate } from '../controllers/rideController.js';
 
 function authenticateToken(req, res, next) {
     const token = req.headers.authorization;
@@ -24,6 +24,7 @@ function authenticateToken(req, res, next) {
 const router = express.Router();
 
 router.post('/create', authenticateToken, createRide);
+router.post('/getRides', getRidesAfterDate);
 router.get('/', getAllRides);
 router.get('/:id', getRideById);
 router.patch('/:id/join', joinRide);

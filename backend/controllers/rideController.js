@@ -23,6 +23,18 @@ export const getAllRides = async (req, res) => {
     }
 };
 
+export const getRidesAfterDate = async (req, res) => {
+    try{
+        let cutoff = new Date(req.body.timeLeaving);
+        const rides = await Ride.find({timeLeaving: {$gte: cutoff}});
+        console.log(rides);
+        res.status(200).json({success: true, message: 'Rides found', data: rides});
+    }
+    catch(err){
+        res.status(500).json({message: err.message});
+    }
+};
+
 export const getRideById = async (req, res) => {
     try{
         const ride = await Ride.findById(req.params.id).populate('driver passengers');

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { GOOGLE_MAPS_API_KEY } from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BACKEND_URL } from '@env';
 
 // Address validation function using Google Geocoding API
 const validateAddress = async (address) => {
@@ -137,6 +139,29 @@ export default function FindRide({ navigation }) {
 
     if (!destinationValidation || !destinationValidation.isValid) {
       Alert.alert('Invalid Address', 'Please enter a valid destination address');
+      return;
+    }
+
+    let userData = JSON.parse(await AsyncStorage.getItem('userToken'));
+    console.log(userData);
+    let token = await userData['token'];
+    delete userData['token'];
+    // update API call
+    console.log(BACKEND_URL + "/api/rides/getRides");
+    let serverResponse = await fetch(BACKEND_URL + "/api/rides/getRides", {
+      method: 'POST',
+      headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({timeLeaving: leaveTime})
+    });
+      
+    const responseText = await serverResponse.text();
+    const responseJSON = JSON.parse(responseText);
+    console.log(responseText);
+    if(!responseJSON.success){
+      Alert.alert('Rideshare Failed', 'Ride share failed. Please try again.');
       return;
     }
 
