@@ -1,39 +1,114 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Keyboard, TouchableWithoutFeedback } from 'react-native';
-
-const placeholderRides = [
-  { id: '1', origin: 'UCLA', destination: 'LAX', time: '2024-06-10 10:00', driver: 'Alice' },
-  { id: '2', origin: 'UCLA', destination: 'Santa Monica', time: '2024-06-10 11:00', driver: 'Bob' },
-  { id: '3', origin: 'Westwood', destination: 'LAX', time: '2024-06-10 12:00', driver: 'Charlie' },
-  { id: '4', origin: 'UCLA', destination: 'Downtown', time: '2024-06-10 13:00', driver: 'Dana' },
-];
+import { GOOGLE_MAPS_API_KEY } from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BACKEND_URL } from '@env';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function FindRide2({ navigation, route }) {
+  const rides = route.params.filteredRides;
   // Filtering states (prefilled from route.params if available)
   const [origin] = useState(route?.params?.origin || '');
   const [destination] = useState(route?.params?.destination || '');
-  const [originRadius, setOriginRadius] = useState(route?.params?.originRadius || '');
-  const [destinationRadius, setDestinationRadius] = useState(route?.params?.destinationRadius || '');
-  const [timeRangeHours, setTimeRangeHours] = useState(route?.params?.timeRangeHours || '');
-  const [timeRangeMinutes, setTimeRangeMinutes] = useState(route?.params?.timeRangeMinutes || '');
+  const [originRadius, setOriginRadius] = useState(route?.params?.originRadius || 5);
+  const [destinationRadius, setDestinationRadius] = useState(route?.params?.destinationRadius || 5);
+  const [timeRangeHours, setTimeRangeHours] = useState(route?.params?.timeRangeHours || 0);
+  const [timeRangeMinutes, setTimeRangeMinutes] = useState(route?.params?.timeRangeMinutes || 30);
   const [filtersVisible, setFiltersVisible] = useState(false);
+  const [filteredRides, setFilteredRides] = useState(rides);
 
-  // Filtering logic (placeholder logic, since rides don't have radius/time fields)
-  const filteredRides = placeholderRides.filter(ride => {
-    return (
-      (origin === '' || ride.origin.toLowerCase().includes(origin.toLowerCase())) &&
-      (destination === '' || ride.destination.toLowerCase().includes(destination.toLowerCase()))
+  // Converts numeric degrees to radians
+  function toRad(Value) 
+  {
+      return Value * Math.PI / 180;
+  }
+
+  function calcCrow(lat1, lon1, lat2, lon2) 
+  {
+      var R = 6371; // km
+      var dLat = toRad(lat2-lat1);
+      var dLon = toRad(lon2-lon1);
+      var lat1 = toRad(lat1);
+      var lat2 = toRad(lat2);
+
+      var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+      var d = R * c;
+      return d;
+  }
+
+  function metersToMiles(meters, miles){
+    return meters / 1.609;
+  }
+
+  async function filterRides(){
+    let filteredRides = [];
+    const userSrc = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${origin}&key=${GOOGLE_MAPS_API_KEY}`
     );
+    const userDest = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${destination}&key=${GOOGLE_MAPS_API_KEY}`
+    );
+    const userSrcInfo = await userSrc.json();
+    const userDestInfo = await userDest.json();
+    const userSrcLat = userSrcInfo.results[0].geometry.location.lat;
+    const userSrcLng = userSrcInfo.results[0].geometry.location.lng;
+    const userDestLat = userDestInfo.results[0].geometry.location.lat;
+    const userDestLng = userDestInfo.results[0].geometry.location.lng;
+
+    for(let ride of rides){
+      try {
+        let rideDepartureTime = new Date(ride.timeLeaving);
+        const src = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${ride.origin}&key=${GOOGLE_MAPS_API_KEY}`
+        );
+        const dest = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${ride.destination}&key=${GOOGLE_MAPS_API_KEY}`
+        );
+        const srcinfo = await src.json();
+        const destinfo = await dest.json();
+        
+        if (srcinfo.status === 'OK' && srcinfo.results.length > 0 && destinfo.status === 'OK' && destinfo.results.length > 0) {
+          const srcLat = srcinfo.results[0].geometry.location.lat;
+          const srcLng = srcinfo.results[0].geometry.location.lng;
+          const destLat = destinfo.results[0].geometry.location.lat;
+          const destLng = destinfo.results[0].geometry.location.lng;
+
+          let originDist = metersToMiles(calcCrow(userSrcLat, userSrcLng, srcLat, srcLng));
+          let destDist = metersToMiles(calcCrow(userDestLat, userDestLng, destLat, destLng));
+
+          if(originDist < originRadius && destDist < destinationRadius){
+            filteredRides.push(ride);
+          }
+        }
+      } catch (error) {
+        console.error('Address validation error:', error);
+      }
+    }
+    return filteredRides;
+  }
+
+  filterRides().then((output) => {
+    setFilteredRides(output);
   });
 
+  useEffect(() =>{
+    console.log(originRadius);
+    console.log(destinationRadius);
+    console.log(timeRangeHours);
+    console.log(timeRangeMinutes);
+    filterRides().then((output) => {
+    setFilteredRides(output);
+    //console.log(output[0].timeLeaving);
+    //convertTZ(output[0].timeLeaving, "America/Los_Angeles")
+  });
+  }, [originRadius, destinationRadius, timeRangeHours, timeRangeMinutes]);
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.container}>
         <Text style={styles.title}>Available Rides</Text>
-        <TouchableOpacity
-          style={styles.filterToggle}
-          onPress={() => setFiltersVisible(v => !v)}
-        >
+        <TouchableOpacity style={styles.filterToggle} onPress={() => setFiltersVisible(v => !v)}>
           <Text style={styles.filterToggleText}>{filtersVisible ? 'Hide Filters' : 'Show Filters'}</Text>
         </TouchableOpacity>
         {filtersVisible && (
@@ -83,7 +158,7 @@ export default function FindRide2({ navigation, route }) {
               <View style={styles.rideCard}>
                 <Text style={styles.rideText}>From: {item.origin}</Text>
                 <Text style={styles.rideText}>To: {item.destination}</Text>
-                <Text style={styles.rideText}>Time: {item.time}</Text>
+                <Text style={styles.rideText}>Time: {new Date(item.timeLeaving).toLocaleString("en-US", "America/Los_Angeles")}</Text>
               </View>
             </TouchableOpacity>
           )}

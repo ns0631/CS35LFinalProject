@@ -2,8 +2,18 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
 const UserSchema = new mongoose.Schema({
-    name: {
+    firstName: {
         type: String,
+        required: true
+    },
+
+    lastName: {
+        type: String,
+        required: true
+    },
+
+    createdAt:{
+        type: Date,
         required: true
     },
 
@@ -17,7 +27,7 @@ const UserSchema = new mongoose.Schema({
         required: true
     },
 
-    number: String,
+    phone: String,
 
     ratings: {
         driver: [Number],

@@ -1,111 +1,502 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { BACKEND_URL } from '@env';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  ScrollView,
+  SafeAreaView,
+  Alert,
+  ActivityIndicator
+} from 'react-native';
+import { useAuth } from '../App';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
+// UCLA email validation function
+const isValidUCLAEmail = (email) => {
+  const uclaEmailRegex = /^[a-zA-Z0-9._%+-]+@(ucla\.edu|g\.ucla\.edu)$/;
+  return uclaEmailRegex.test(email.toLowerCase());
+};
 
 export default function EditProfile({ navigation }) {
-  const [name, setName] = useState('John Doe');
-  const [email, setEmail] = useState('johndoe@example.com');
-  const [phone, setPhone] = useState('555-123-4567');
-  const [profilePic, setProfilePic] = useState('https://via.placeholder.com/100');
+  const { user, login } = useAuth();
+  
+  // Initialize form state with user data
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const handleSave = () => {
-    console.log('Saved Profile:', { name, email, phone });
-    navigation.goBack(); // or navigate('ViewProfile') if needed
+  // Load user data when component mounts
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || '');
+      setLastName(user.lastName || '');
+      setEmail(user.email || '');
+      setPhone(user.phone || '');
+    }
+  }, [user]);
+
+  // Track if user has made changes
+  useEffect(() => {
+    if (user) {
+      const originalData = {
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || ''
+      };
+      
+      const currentData = { firstName, lastName, email, phone };
+      
+      const changed = JSON.stringify(originalData) !== JSON.stringify(currentData);
+      setHasChanges(changed);
+    }
+  }, [firstName, lastName, email, phone, user]);
+
+  const handleSave = async () => {
+    // Validation
+    if (!firstName.trim() || !lastName.trim()) {
+      Alert.alert('Error', 'Please enter your first and last name');
+      return;
+    }
+
+    if (!email.trim()) {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
+
+    if (!isValidUCLAEmail(email)) {
+      Alert.alert(
+        'Invalid Email', 
+        'Please use a valid UCLA email address ending with @ucla.edu or @g.ucla.edu'
+      );
+      return;
+    }
+
+    saveProfile();
   };
 
+  async function saveProfile(){
+    
+    setIsLoading(true);
+    
+    try {
+      const userData = JSON.parse(await AsyncStorage.getItem('userToken'));
+      const token = await userData['token'];
+      // update API call
+      console.log(BACKEND_URL + "/api/users/editprofile");
+      let serverResponse = await fetch(BACKEND_URL + "/api/users/editprofile", {
+          method: 'POST',
+          //'credentials': 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization':  "" + token
+          },
+          body: JSON.stringify({email: email, firstName: firstName, lastName: lastName, phone: phone})
+      });
+      
+      const responseText = await serverResponse.text();
+      const responseJSON = JSON.parse(responseText);
+      
+      if(!responseJSON.success){
+        throw new Error("Login failed.");
+      }
+
+      // Create updated user data
+      const updatedUser = {
+        ...user,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.toLowerCase().trim(),
+        phone: phone.trim(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Update user data in auth context
+      await login(updatedUser);
+
+      Alert.alert(
+        'Profile Updated',
+        'Your profile has been updated successfully!',
+        [
+          { 
+            text: 'OK', 
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
+
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (hasChanges) {
+      Alert.alert(
+        'Discard Changes',
+        'You have unsaved changes. Are you sure you want to go back?',
+        [
+          { text: 'Keep Editing', style: 'cancel' },
+          { 
+            text: 'Discard', 
+            style: 'destructive',
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const getInitials = (firstName, lastName) => {
+    const first = firstName?.charAt(0)?.toUpperCase() || '';
+    const last = lastName?.charAt(0)?.toUpperCase() || '';
+    return first + last || 'US';
+  };
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>No user data available</Text>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
+            <Text style={styles.buttonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Edit Profile</Text>
-
-        <Image source={{ uri: profilePic }} style={styles.profileImage} />
-
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Name</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-          />
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.avatarContainer}>
+            <Text style={styles.avatarText}>
+              {getInitials(firstName, lastName)}
+            </Text>
+          </View>
+          <Text style={styles.title}>Edit Profile</Text>
+          <Text style={styles.subtitle}>Update your account information</Text>
         </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
+        {/* Form */}
+        <View style={styles.formSection}>
+          <View style={styles.nameContainer}>
+            <View style={styles.nameInputContainer}>
+              <Text style={styles.label}>First Name</Text>
+              <TextInput
+                style={styles.nameInput}
+                value={firstName}
+                onChangeText={setFirstName}
+                placeholder="First name"
+                autoCapitalize="words"
+                placeholderTextColor="#A9A9A9"
+              />
+            </View>
+            <View style={styles.nameInputContainer}>
+              <Text style={styles.label}>Last Name</Text>
+              <TextInput
+                style={styles.nameInput}
+                value={lastName}
+                onChangeText={setLastName}
+                placeholder="Last name"
+                autoCapitalize="words"
+                placeholderTextColor="#A9A9A9"
+              />
+            </View>
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>UCLA Email</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.disabledfield,
+                  email && !isValidUCLAEmail(email) && styles.inputError,
+                  
+                ]}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="your.name@ucla.edu"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholderTextColor="#A9A9A9"
+                disabled={true}
+              />
+            {email && !isValidUCLAEmail(email) && (
+              <Text style={styles.errorText}>Must be a valid UCLA email (@ucla.edu or @g.ucla.edu)</Text>
+            )}
+            {email.toLowerCase().trim() !== user.email.toLowerCase() && (
+              <Text style={styles.warningText}>⚠️ Changing email will require re-verification</Text>
+            )}
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Phone Number (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="Enter your phone number here"
+              keyboardType="phone-pad"
+              placeholderTextColor="#A9A9A9"
+            />
+          </View>
+
+          {/* Account Info */}
+          <View style={styles.infoSection}>
+            <Text style={styles.infoTitle}>Account Information</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Account Status:</Text>
+              <Text style={[
+                styles.infoValue,
+                user.isEmailVerified ? styles.verified : styles.unverified
+              ]}>
+                {user.isEmailVerified ? 'Verified' : 'Unverified'}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Member Since:</Text>
+              <Text style={styles.infoValue}>
+                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Phone</Text>
-          <TextInput
-            style={styles.input}
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-          />
-        </View>
+        {/* Action Buttons */}
+        <View style={styles.actionSection}>
+          <TouchableOpacity 
+            style={[
+              styles.saveButton, 
+              (!hasChanges || isLoading) && styles.buttonDisabled
+            ]} 
+            onPress={handleSave}
+            disabled={!hasChanges || isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.saveButtonText}>Save Changes</Text>
+            )}
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
-          <Text style={styles.buttonText}>Save Changes</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableWithoutFeedback>
+          <TouchableOpacity 
+            style={styles.cancelButton} 
+            onPress={handleCancel}
+            disabled={isLoading}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 40,
-    paddingBottom: 40,
+    backgroundColor: '#f5f5f5',
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  header: {
+    backgroundColor: '#003f5c',
+    paddingTop: 20,
+    paddingBottom: 30,
     paddingHorizontal: 20,
     alignItems: 'center',
+  },
+  avatarContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  avatarText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#003f5c',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 30,
-    color: '#003f5c',
+    color: '#fff',
+    marginBottom: 5,
   },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 30,
+  subtitle: {
+    fontSize: 16,
+    color: '#e0e0e0',
+  },
+  formSection: {
+    padding: 20,
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  nameInputContainer: {
+    flex: 1,
+    marginHorizontal: 5,
   },
   fieldGroup: {
-    width: '100%',
     marginBottom: 20,
   },
   label: {
-    fontSize: 14,
-    marginBottom: 5,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
     color: '#333',
-    marginLeft: 5,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#ddd',
     borderRadius: 10,
     padding: 12,
-    backgroundColor: '#f9f9f9',
-    width: '100%',
+    backgroundColor: '#fff',
+    fontSize: 16,
+  },
+  nameInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 12,
+    backgroundColor: '#fff',
+    fontSize: 16,
+  },
+  inputError: {
+    borderColor: '#ff3333',
+    backgroundColor: '#fff5f5',
+  },
+  disabledfield: {
+    color: "#A9A9A9"
+  },
+  errorText: {
+    color: '#ff3333',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  warningText: {
+    color: '#ff9800',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  infoSection: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#003f5c',
+    marginBottom: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  verified: {
+    color: '#4CAF50',
+  },
+  unverified: {
+    color: '#ff9800',
+  },
+  actionSection: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  saveButton: {
+    backgroundColor: '#003f5c',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#666',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   button: {
     backgroundColor: '#003f5c',
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 20,
-    width: 200,
-    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
   },
 });

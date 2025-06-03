@@ -6,10 +6,10 @@ export const createRide = async (req, res) => {
         console.log(req.body);
         const ride = new Ride(req.body);
         await ride.save();
-        res.status(201).json(ride);
+        res.status(201).json({ message: 'Ride created', success: true, data: ride});
     }
     catch (err){
-        res.status(400).json({ message : err.message});
+        res.status(400).json({ message : err.message, success: false});
     }
 };
 
@@ -17,6 +17,18 @@ export const getAllRides = async (req, res) => {
     try{
         const rides = await Ride.find();
         res.status(200).json(rides);
+    }
+    catch(err){
+        res.status(500).json({message: err.message});
+    }
+};
+
+export const getRidesAfterDate = async (req, res) => {
+    try{
+        let cutoff = new Date(req.body.timeLeaving);
+        const rides = await Ride.find({timeLeaving: {$gte: cutoff}});
+        console.log(rides);
+        res.status(200).json({success: true, message: 'Rides found', data: rides});
     }
     catch(err){
         res.status(500).json({message: err.message});
