@@ -104,6 +104,48 @@ export const verifyUser = async (req, res) => {
 };
 
 export const deleteUser = async (req, res) => {
+
+// Simple addRating endpoint
+export const addRating = async (req, res) => {
+    try {
+        const { userId, role, rating } = req.body;
+        if (!['driver', 'passenger'].includes(role)) {
+            return res.status(400).json({ success: false, message: 'Invalid role' });
+        }
+        if (!userId || !rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ success: false, message: 'Missing or invalid userId or rating' });
+        }
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        user.ratings[role].push(rating);
+        await user.save();
+        res.status(200).json({ success: true, message: 'Rating added' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// Simple getAverages endpoint
+export const getAverages = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        const driver = user.ratings.driver;
+        const passenger = user.ratings.passenger;
+        const driverAvg = driver.length ? (driver.reduce((a, b) => a + b, 0) / driver.length) : null;
+        const passengerAvg = passenger.length ? (passenger.reduce((a, b) => a + b, 0) / passenger.length) : null;
+        res.status(200).json({
+            success: true,
+            driverAverage: driverAvg,
+            driverCount: driver.length,
+            passengerAverage: passengerAvg,
+            passengerCount: passenger.length
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
     try {
         let email = req.body.email;
         let passwd = req.body.password;

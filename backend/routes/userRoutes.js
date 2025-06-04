@@ -27,4 +27,9 @@ router.delete('/deleteaccount', deleteUser);
 router.post('/login', verifyUser);
 router.post('/editprofile', authenticateToken, updateUser);
 
+import { addRating, getAverages } from '../controllers/userController.js';
+
+router.post('/:id/addrating', addRating);
+router.get('/:id/averages', getAverages);
+
 export default router;
