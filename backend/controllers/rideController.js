@@ -35,14 +35,25 @@ export const getAllRides = async (req, res) => {
     }
 };
 
+// Get all rides posted by the current user (driver)
+export const getMyRides = async (req, res) => {
+    try {
+        // req.user.username is the email (from JWT)
+        const user = await User.findOne({ email: req.user.username });
+        if (!user) return res.status(401).json({ success: false, message: 'User not found' });
+        const rides = await Ride.find({ driver: user._id }).populate('driver passengers');
+        res.status(200).json({ success: true, data: rides });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 export const getRidesAfterDate = async (req, res) => {
     console.log('--- getRidesAfterDate called ---');
     console.log('Request user:', req.user);
     console.log('Request body:', req.body);
     try{
-        // TEMPORARY: Return all rides, ignore time filtering
-        // --- Original time filtering code commented out below ---
-        /*
+        // Restore original time filtering logic
         let lowcutoff = new Date(req.body.timeLeaving);
         let highcutoff = new Date(lowcutoff);
         let hourbound = Number(req.body.hourBound);
@@ -50,8 +61,6 @@ export const getRidesAfterDate = async (req, res) => {
         highcutoff.addHours(hourbound);
         highcutoff.addMinutes(minutebound);
         const rides = await Ride.find({timeLeaving: {$gte: lowcutoff, $lte: highcutoff}});
-        */
-        const rides = await Ride.find();
         for(let ride of rides){
             ride.driver = await User.findById(ride.driver);
             let newPassengers = [];

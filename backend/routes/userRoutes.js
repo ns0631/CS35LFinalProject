@@ -1,5 +1,5 @@
 import express from 'express';
-import { createUser, deleteUser, verifyUser, updateUser } from '../controllers/userController.js';
+import { createUser, deleteUser, verifyUser, updateUser, getUserById, rateUser } from '../controllers/userController.js';
 import jwt from 'jsonwebtoken';
 
 function authenticateToken(req, res, next) {
@@ -30,5 +30,9 @@ router.post('/editprofile', authenticateToken, (req, res, next) => {
     console.log('POST /users/editprofile body:', req.body);
     next();
 }, updateUser);
+
+// Rating endpoints
+router.get('/:id', getUserById);
+router.post('/:id/rate', authenticateToken, rateUser);
 
 export default router;

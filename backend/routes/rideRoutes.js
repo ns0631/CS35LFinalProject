@@ -1,6 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { createRide, getAllRides, getRideById, joinRide, deleteRideById, getRidesAfterDate } from '../controllers/rideController.js';
+import { createRide, getAllRides, getRideById, joinRide, deleteRideById, getRidesAfterDate, getMyRides } from '../controllers/rideController.js';
 
 function authenticateToken(req, res, next) {
     console.log('--- Incoming request to protected ride endpoint ---');
@@ -29,7 +29,9 @@ router.post('/create', authenticateToken, (req, res, next) => {
     next();
 }, createRide);
 router.post('/getRides', authenticateToken, getRidesAfterDate);
+router.get('/myrides', authenticateToken, getMyRides);
 router.get('/', getAllRides);
+// IMPORTANT: /myrides must be above /:id to prevent ObjectId cast errors
 router.get('/:id', getRideById);
 router.patch('/:id/join', authenticateToken, joinRide);
 router.delete('/:id', deleteRideById);

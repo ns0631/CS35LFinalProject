@@ -97,6 +97,49 @@ export const verifyUser = async (req, res) => {
     }
 };
 
+export const rateUser = async (req, res) => {
+    // req.user is the rater (from JWT), req.params.id is the user being rated
+    try {
+        const raterId = req.user && req.user.username ? req.user.username : null;
+        const ratedUserId = req.params.id;
+        const { value } = req.body;
+        if (!value || value < 1 || value > 5) {
+            return res.status(400).json({ success: false, message: 'Rating value must be 1-5' });
+        }
+        const ratedUser = await User.findById(ratedUserId);
+        if (!ratedUser) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        // Find rater User by email (username in JWT)
+        const raterUser = await User.findOne({ email: raterId });
+        if (!raterUser) {
+            return res.status(403).json({ success: false, message: 'Rater not found' });
+        }
+        // Remove any previous rating by this user
+        ratedUser.ratings = ratedUser.ratings.filter(r => String(r.rater) !== String(raterUser._id));
+        // Add new rating
+        ratedUser.ratings.push({ rater: raterUser._id, value });
+        await ratedUser.save();
+        const avg = ratedUser.getAverageRating();
+        return res.status(200).json({ success: true, message: 'Rating submitted', average: avg });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+export const getUserById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('-password');
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        const avg = user.getAverageRating();
+        const userObj = user.toObject();
+        userObj.averageRating = avg;
+        res.status(200).json({ success: true, data: userObj });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 export const deleteUser = async (req, res) => {
     try {
         let email = req.body.email;

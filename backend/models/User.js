@@ -29,10 +29,19 @@ const UserSchema = new mongoose.Schema({
 
     phone: String,
 
-    ratings: {
-        driver: [Number],
-        passenger: [Number]
-    }
+    ratings: [{
+        rater: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        value: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 5
+        }
+    }],
 
 });
 
@@ -53,5 +62,11 @@ UserSchema.pre('save', async function (next) {
 
 
 
+
+UserSchema.methods.getAverageRating = function() {
+    if (!this.ratings || this.ratings.length === 0) return null;
+    const sum = this.ratings.reduce((acc, curr) => acc + curr.value, 0);
+    return (sum / this.ratings.length).toFixed(2);
+};
 
 export default mongoose.model('User', UserSchema);
