@@ -3,7 +3,8 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 
-process.env.SECRET_KEY = crypto.randomBytes(256).toString('hex');
+// process.env.SECRET_KEY = crypto.randomBytes(256).toString('hex');
+process.env.SECRET_KEY = process.env.JWT_SECRET;
 
 function generateAccessToken(username) {
     return jwt.sign(username, process.env.SECRET_KEY, { expiresIn: '900s' });

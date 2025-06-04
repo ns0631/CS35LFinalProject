@@ -60,27 +60,32 @@ export default function EmailVerification({ navigation, route }) {
     try {
       // Simulate verification API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // For demo, accept any 6-digit code
-      // In real implementation, verify against sent code
-      
-      const verifiedUserData = {
-        ...userData,
-        isEmailVerified: true,
-        verifiedAt: new Date().toISOString()
-      };
 
-      // Login the user after successful verification
-      await login(verifiedUserData);
-      
+      // After verification, perform a real login to get the JWT token
+      const serverResponse = await fetch(BACKEND_URL + "/api/users/login", {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: userData.email, password: userData.password })
+      });
+      const responseText = await serverResponse.text();
+      const responseJSON = JSON.parse(responseText);
+      if (!responseJSON.success) {
+        Alert.alert('Verification Failed', 'Automatic login after verification failed. Please log in manually.');
+        setIsLoading(false);
+        return;
+      }
+      await login(responseJSON.data); // Now AsyncStorage has a JWT!
+
       Alert.alert(
-        'Success!', 
+        'Success!',
         'Your UCLA email has been verified. Welcome to UCLA Rideshare!',
         [{ text: 'Continue', onPress: () => {/* Navigation handled by auth context */} }]
       );
-
     } catch (error) {
-      Alert.alert('Verification Failed', 'Invalid verification code. Please try again.');
+      Alert.alert('Verification Failed', 'Invalid verification code or network error. Please try again.');
     } finally {
       setIsLoading(false);
     }

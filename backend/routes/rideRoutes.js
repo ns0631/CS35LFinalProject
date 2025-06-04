@@ -3,19 +3,20 @@ import jwt from 'jsonwebtoken';
 import { createRide, getAllRides, getRideById, joinRide, deleteRideById, getRidesAfterDate } from '../controllers/rideController.js';
 
 function authenticateToken(req, res, next) {
+    console.log('--- Incoming request to protected ride endpoint ---');
+    console.log('Request path:', req.path);
+    console.log('Headers:', req.headers);
     const token = req.headers.authorization;
     if(token == null){
         console.log("JWT missing");
         return res.status(403).json({message: "JWT missing", sucesss: false});
     }
-  
     jwt.verify(token, process.env.SECRET_KEY, (err, user) => {  
       if (err){
         console.log("Bad JWT");
         console.log(err);
-        return res.status(401).json({message: "Bad JWT", sucesss: false});
+        return res.status(401).json({message: "Bad JWT", success: false});
       }
-  
       req.user = user;
       next();
     })
@@ -23,7 +24,10 @@ function authenticateToken(req, res, next) {
 
 const router = express.Router();
 
-router.post('/create', authenticateToken, createRide);
+router.post('/create', authenticateToken, (req, res, next) => {
+    console.log('POST /rides/create body:', req.body);
+    next();
+}, createRide);
 router.post('/getRides', authenticateToken, getRidesAfterDate);
 router.get('/', getAllRides);
 router.get('/:id', getRideById);

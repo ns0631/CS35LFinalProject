@@ -147,35 +147,51 @@ export default function ShareRide({ navigation }) {
       return;
     }
 
-    let userData = JSON.parse(await AsyncStorage.getItem('userToken'));
-    let token = await userData['token'];
-    delete userData['token'];
-    // update API call
-    console.log(BACKEND_URL + "/api/rides/create");
-    let serverResponse = await fetch(BACKEND_URL + "/api/rides/create", {
-      method: 'POST',
-      headers: {
+    setIsApiKeyValid(false);
+    setShowDatePicker(false);
+    setIsApiKeyValid(true);
+
+    try {
+      // Retrieve token from AsyncStorage
+      const userDataString = await AsyncStorage.getItem('userToken');
+      const userData = userDataString ? JSON.parse(userDataString) : null;
+      const token = userData && userData.token ? userData.token : undefined;
+      const driverId = userData && userData._id ? userData._id : undefined;
+      console.log('JWT being sent:', token); // Debug log
+      console.log('Sharing ride as driver:', driverId); // Debug log
+
+      let serverResponse = await fetch(BACKEND_URL + "/api/rides/create", {
+        method: 'POST',
+        headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization':  "" + token
+          'Authorization': token || '', // Always send a string, never undefined
         },
-        body: JSON.stringify({origin: pickupValidation.formattedAddress, destination: dropoffValidation.formattedAddress, driver: userData, timeLeaving: date})
-    });
+        body: JSON.stringify({
+          origin: pickupValidation.formattedAddress,
+          destination: dropoffValidation.formattedAddress,
+          timeLeaving: date,
+          driver: driverId,
+        })
+      });
       
-    const responseText = await serverResponse.text();
-    const responseJSON = JSON.parse(responseText);
-    if(!responseJSON.success){
-      Alert.alert('Rideshare Failed', 'Ride share failed. Please try again.');
-      return;
-    }
+      const responseText = await serverResponse.text();
+      const responseJSON = JSON.parse(responseText);
+      if(!responseJSON.success){
+        Alert.alert('Rideshare Failed', responseJSON.message || 'Ride share failed. Please try again.');
+        return;
+      }
 
-    console.log('Ride Shared:', { 
-      pickup: pickupValidation.formattedAddress, 
-      dropoff: dropoffValidation.formattedAddress, 
-      date 
-    });
-    Alert.alert('Ride Shared', `Pickup: ${pickupValidation.formattedAddress}\nDropoff: ${dropoffValidation.formattedAddress}\nDate/time: ${date}`);
-    navigation.goBack();
+      console.log('Ride Shared:', { 
+        pickup: pickupValidation.formattedAddress, 
+        dropoff: dropoffValidation.formattedAddress, 
+        date 
+      });
+      Alert.alert('Ride Shared', `Pickup: ${pickupValidation.formattedAddress}\nDropoff: ${dropoffValidation.formattedAddress}\nDate/time: ${date}`);
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to share ride. Please try again.');
+    }
   };
 
   if (!isApiKeyValid) {

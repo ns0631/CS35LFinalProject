@@ -226,7 +226,7 @@ export default function FindRide2({ navigation, route }) {
                 <Text style={styles.rideText}>To: {item.destination}</Text>
                 <Text style={styles.rideText}>Time: {new Date(item.timeLeaving).toLocaleString("en-US", "America/Los_Angeles")}</Text>
                 <Text style={styles.rideText}>Passengers: {item.passengers.length > 0 ? item.passengers.map((pass) => (pass.firstName + " " + pass.lastName)).join(", ") : "None"}</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('ViewProfile')}>
+                <TouchableOpacity onPress={() => navigation.navigate('ViewProfile', { user: item.driver })}>
                   <Text style={styles.rideText}>Driver: {item.driver.firstName} {item.driver.lastName}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.joinButton} onPress={() => (handleJoin(item._id))}>

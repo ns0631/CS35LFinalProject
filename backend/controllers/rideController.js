@@ -12,6 +12,9 @@ Date.prototype.addMinutes = function(m) {
 }
 
 export const createRide = async (req, res) => {
+    console.log('--- createRide called ---');
+    console.log('Request user:', req.user);
+    console.log('Request body:', req.body);
     try {
         const ride = new Ride(req.body);
         await ride.save();
@@ -33,18 +36,22 @@ export const getAllRides = async (req, res) => {
 };
 
 export const getRidesAfterDate = async (req, res) => {
+    console.log('--- getRidesAfterDate called ---');
+    console.log('Request user:', req.user);
+    console.log('Request body:', req.body);
     try{
+        // TEMPORARY: Return all rides, ignore time filtering
+        // --- Original time filtering code commented out below ---
+        /*
         let lowcutoff = new Date(req.body.timeLeaving);
         let highcutoff = new Date(lowcutoff);
         let hourbound = Number(req.body.hourBound);
         let minutebound = Number(req.body.minuteBound);
         highcutoff.addHours(hourbound);
         highcutoff.addMinutes(minutebound);
-        /*console.log(lowcutoff);
-        console.log(highcutoff);
-        console.log(hourbound);*/
         const rides = await Ride.find({timeLeaving: {$gte: lowcutoff, $lte: highcutoff}});
-        console.log(rides);
+        */
+        const rides = await Ride.find();
         for(let ride of rides){
             ride.driver = await User.findById(ride.driver);
             let newPassengers = [];
@@ -72,6 +79,9 @@ export const getRideById = async (req, res) => {
 };
 
 export const joinRide = async (req, res) => {
+    console.log('--- joinRide called ---');
+    console.log('Request user:', req.user);
+    console.log('Request body:', req.body);
     try {
         if (!req.body.userId) {
             return res.status(400).json({ success: false, message: 'Missing userId in request body' });
