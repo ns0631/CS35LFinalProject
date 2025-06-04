@@ -100,8 +100,8 @@ export default function FindRide({ navigation }) {
   const [destinationRadius, setDestinationRadius] = useState('');
   const [leaveTime, setLeaveTime] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [timeRangeHours, setTimeRangeHours] = useState('');
-  const [timeRangeMinutes, setTimeRangeMinutes] = useState('');
+  const [timeRangeHours, setTimeRangeHours] = useState(0);
+  const [timeRangeMinutes, setTimeRangeMinutes] = useState(30);
   const [isApiKeyValid, setIsApiKeyValid] = useState(false);
 
   useEffect(() => {
@@ -154,17 +154,16 @@ export default function FindRide({ navigation }) {
           'Content-Type': 'application/json',
           'Authorization': token,
         },
-        body: JSON.stringify({timeLeaving: leaveTime})
+        body: JSON.stringify({timeLeaving: leaveTime, hourBound: timeRangeHours, minuteBound: timeRangeMinutes})
     });
       
     const responseText = await serverResponse.text();
     const responseJSON = JSON.parse(responseText);
     if(!responseJSON.success){
-      Alert.alert('Rideshare Failed', 'Ride share failed. Please try again.');
+      Alert.alert('Ridesearch Failed', 'Ride search failed. Please log out and log back in.');
       return;
     }
 
-    console.log('Server response:' + JSON.stringify(responseJSON.data));
     navigation.navigate('FindRide2', {
       origin: originValidation.formattedAddress,
       originRadius,
@@ -173,7 +172,8 @@ export default function FindRide({ navigation }) {
       leaveTime: leaveTime.toISOString(),
       timeRangeHours,
       timeRangeMinutes,
-      filteredRides: responseJSON.data
+      filteredRides: responseJSON.data,
+      visited: false
     });
   };
 

@@ -11,12 +11,10 @@ function generateAccessToken(username) {
 
 export const createUser = async (req, res) => {
     try {
-        console.log(req.body);
         let email = req.body.email;
         const query = User.findOne({ 'email': email });
         var available = true;
         await query.then(async (output) => {
-            console.log(output);
             if (output === null) {
                 let userData = req.body;
                 userData.createdAt = new Date();
@@ -25,8 +23,6 @@ export const createUser = async (req, res) => {
 
                 userData = user.toObject();
                 delete userData['password'];
-                console.log(userData);
-
                 res.status(201).json({message: 'User Created', success: true, data: user});
             } else {
                 res.status(403).json({message: 'Username unavailable', success: false});
@@ -57,7 +53,6 @@ export const updateUser = async (req, res) => {
         let userData = user.toObject();
         delete userData['password'];
         userData['token'] = token;
-        console.log(userData);
 
         return res.status(200).json({message: 'Info updated', success: true, data: userData});
     }
@@ -67,7 +62,6 @@ export const updateUser = async (req, res) => {
 };
 
 export const verifyUser = async (req, res) => {
-    console.log(req.body);
     try {
         const { email, password } = req.body;
 
@@ -89,7 +83,6 @@ export const verifyUser = async (req, res) => {
                 let userData = user.toObject();
                 delete userData['password'];
                 userData['token'] = token;
-                console.log(userData);
 
                 res.status(200).json({success: true, message: "User authenticated", token: token, data: userData});
             } else{

@@ -1,9 +1,18 @@
 import Ride from '../models/Ride.js';
 import User from '../models/User.js';
 
+Date.prototype.addHours = function(h) {
+  this.setTime(this.getTime() + (h*60*60*1000));
+  return this;
+}
+
+Date.prototype.addMinutes = function(m) {
+  this.setTime(this.getTime() + (m*60*1000));
+  return this;
+}
+
 export const createRide = async (req, res) => {
     try {
-        console.log(req.body);
         const ride = new Ride(req.body);
         await ride.save();
         res.status(201).json({ message: 'Ride created', success: true, data: ride});
@@ -25,9 +34,25 @@ export const getAllRides = async (req, res) => {
 
 export const getRidesAfterDate = async (req, res) => {
     try{
-        let cutoff = new Date(req.body.timeLeaving);
-        const rides = await Ride.find({timeLeaving: {$gte: cutoff}});
+        let lowcutoff = new Date(req.body.timeLeaving);
+        let highcutoff = new Date(lowcutoff);
+        let hourbound = Number(req.body.hourBound);
+        let minutebound = Number(req.body.minuteBound);
+        highcutoff.addHours(hourbound);
+        highcutoff.addMinutes(minutebound);
+        /*console.log(lowcutoff);
+        console.log(highcutoff);
+        console.log(hourbound);*/
+        const rides = await Ride.find({timeLeaving: {$gte: lowcutoff, $lte: highcutoff}});
         console.log(rides);
+        for(let ride of rides){
+            ride.driver = await User.findById(ride.driver);
+            let newPassengers = [];
+            for(let passenger of ride.passengers){
+                newPassengers.push(await User.findById(passenger));
+            }
+            ride.passengers = newPassengers;
+        }
         res.status(200).json({success: true, message: 'Rides found', data: rides});
     }
     catch(err){
@@ -49,26 +74,28 @@ export const getRideById = async (req, res) => {
 export const joinRide = async (req, res) => {
     try {
         if (!req.body.userId) {
-            return res.status(400).json({ message: 'Missing userId in request body' });
+            return res.status(400).json({ success: false, message: 'Missing userId in request body' });
         }
         const ride = await Ride.findById(req.params.id).populate('driver passengers');
+        const user = await User.findById(req.body.userId);
+        const currentPassengers = ride.passengers.map((passenger) => (passenger._id.toString()));
         if(!ride){
-            return res.status(404).json({message: 'Ride not found'});
+            return res.status(404).json({success: false, message: 'Ride not found'});
         }
-        if(ride.passengers.includes(req.body.userId)) {
-            return res.status(400).json({message: 'User already joined this ride'});
+        if(currentPassengers.includes(req.body.userId)) {
+            return res.status(406).json({success: false, message: 'User already joined this ride'});
         }
 
         if(ride.passengers.length >= ride.capacity) {
-            return res.status(400).json({message: 'Ride is full'});
+            return res.status(403).json({success: false, message: 'Ride is full'});
         }
         
-        ride.passengers.push(req.body.userId);
+        ride.passengers.push(user);
         await ride.save();
-        res.status(200).json({message: 'User added to ride', ride});
+        return res.status(200).json({success: true, message: 'User added to ride', ride});
     }
     catch(err){
-        res.status(500).json({message: err.message});
+        return res.status(500).json({success: false, message: err.message});
     }
 };
 

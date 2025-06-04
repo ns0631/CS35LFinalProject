@@ -27,7 +27,7 @@ router.post('/create', authenticateToken, createRide);
 router.post('/getRides', authenticateToken, getRidesAfterDate);
 router.get('/', getAllRides);
 router.get('/:id', getRideById);
-router.patch('/:id/join', joinRide);
+router.patch('/:id/join', authenticateToken, joinRide);
 router.delete('/:id', deleteRideById);
 
 export default router;

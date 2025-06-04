@@ -1,11 +1,81 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, Alert, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { GOOGLE_MAPS_API_KEY } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BACKEND_URL } from '@env';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function FindRide2({ navigation, route }) {
+  const handleJoin = (rideID) => {
+    console.log("here");
+      Alert.alert(
+        'Join Ride',
+        'Are you sure you want to join this ride?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Join', 
+            style: 'destructive',
+            onPress: async () => {
+              const userData = JSON.parse(await AsyncStorage.getItem('userToken'));
+              const token = await userData['token'];
+
+              let serverResponse = await fetch(BACKEND_URL + `/api/rides/${rideID}/join`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': "" + token,
+                  },
+                  body: JSON.stringify({userId: userData._id})
+              });
+              console.log(serverResponse);
+              if(serverResponse.status == 200){
+                Alert.alert(
+                  'Ride joined',
+                  "You've now joined this ride!",
+                  [
+                      { 
+                        text: 'OK', 
+                        onPress: () => navigation.goBack()
+                      }
+                  ]
+                );
+              } else{
+                console.log("here");
+                let errormessage;
+                switch(serverResponse.status){
+                  case 400:
+                    errormessage = "Log back and log back in.";
+                    break;
+                  case 406:
+                    errormessage = "You've already joined this ride.";
+                    break;
+                  case 404:
+                    errormessage = "Ride doesn't exist.";
+                    break;
+                  case 403:
+                    errormessage = "Ride is full.";
+                    break;
+                }
+                console.log(serverResponse.message);
+                Alert.alert(
+                  'Ride join failed',
+                  errormessage,
+                  [
+                      { 
+                        text: 'OK', 
+                        onPress: () => navigation.goBack()
+                      }
+                  ]
+                );
+              }
+            }
+          }
+        ]
+      );
+    };
+
   const rides = route.params.filteredRides;
   // Filtering states (prefilled from route.params if available)
   const [origin] = useState(route?.params?.origin || '');
@@ -89,19 +159,16 @@ export default function FindRide2({ navigation, route }) {
     return filteredRides;
   }
 
-  filterRides().then((output) => {
-    setFilteredRides(output);
-  });
+  if(!route.params.visited){
+    filterRides().then((output) => {
+      setFilteredRides(output);
+    });
+    route.params.visited = true;
+  }
 
   useEffect(() =>{
-    console.log(originRadius);
-    console.log(destinationRadius);
-    console.log(timeRangeHours);
-    console.log(timeRangeMinutes);
     filterRides().then((output) => {
     setFilteredRides(output);
-    //console.log(output[0].timeLeaving);
-    //convertTZ(output[0].timeLeaving, "America/Los_Angeles")
   });
   }, [originRadius, destinationRadius, timeRangeHours, timeRangeMinutes]);
   return (
@@ -154,13 +221,18 @@ export default function FindRide2({ navigation, route }) {
           style={{ width: '100%' }}
           contentContainerStyle={{ paddingBottom: 40 }}
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => navigation.navigate('ViewProfile')}>
               <View style={styles.rideCard}>
                 <Text style={styles.rideText}>From: {item.origin}</Text>
                 <Text style={styles.rideText}>To: {item.destination}</Text>
                 <Text style={styles.rideText}>Time: {new Date(item.timeLeaving).toLocaleString("en-US", "America/Los_Angeles")}</Text>
+                <Text style={styles.rideText}>Passengers: {item.passengers.length > 0 ? item.passengers.map((pass) => (pass.firstName + " " + pass.lastName)).join(", ") : "None"}</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('ViewProfile')}>
+                  <Text style={styles.rideText}>Driver: {item.driver.firstName} {item.driver.lastName}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.joinButton} onPress={() => (handleJoin(item._id))}>
+                  <Text style={styles.joinButtonText}>Join Ride</Text>
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
           )}
         />
       </View>
@@ -202,6 +274,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     color: '#333',
     fontWeight: 'normal',
+    backgroundColor: '#d5f7f7',
+    padding: 5,
+    borderRadius: 10,
+  },
+  joinButton: {
+    backgroundColor: '#003f5c',
+    padding: 10,
+    borderRadius: 12,
+    marginVertical: 8,
+    width: '80%',
+    maxWidth: 100,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  joinButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 400,
   },
   button: {
     backgroundColor: '#003f5c',
