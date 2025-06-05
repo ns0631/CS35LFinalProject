@@ -36,13 +36,15 @@ export const createUser = async (req, res) => {
 };
 
 export const updateUser = async (req, res) => {
+    console.log(req.body);
     try {
-        if(!req.body.email || !req.body.firstName || !req.body.lastName || !req.body.phone){
+        if(!req.body.email || !req.body.firstName || !req.body.lastName){
             return res.status(400).json({success: false, message: "Request missing first name, last name, email, or phone"});
         }
 
         console.log("JWT present");
         let email = req.body.email;
+        console.log(email);
         let user = await User.findOne({ 'email': email });
 
         user.firstName = req.body.firstName;

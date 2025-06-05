@@ -6,6 +6,7 @@ function authenticateToken(req, res, next) {
     console.log('--- Incoming request to protected user endpoint ---');
     console.log('Request path:', req.path);
     const token = req.headers.authorization;
+    console.log(token);
     if(token == null){
         console.log("JWT missing");
         return res.status(403).json({message: "JWT missing", success: false});
@@ -16,7 +17,9 @@ function authenticateToken(req, res, next) {
         console.log(err);
         return res.status(401).json({message: "Bad JWT", success: false});
       }
+      console.log("JWT successful");
       req.user = user;
+      console.log(req.user);
       next();
     });
 }

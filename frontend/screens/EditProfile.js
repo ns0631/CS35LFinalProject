@@ -136,6 +136,7 @@ export default function EditProfile({ navigation }) {
 
     } catch (error) {
       Alert.alert('Error', 'Failed to update profile. Please try again.');
+      console.log(error);
     } finally {
       setIsLoading(false);
     }

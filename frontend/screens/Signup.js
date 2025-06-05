@@ -106,13 +106,12 @@ export default function Signup({ navigation }) {
       const userData = responseJSON.data;
 
       // Navigate to email verification
-      navigation.navigate('EmailVerification', {
-        email: userData.email,
-        userData: userData
-      });
+      Alert.alert('Success!', 'Account created');
+      navigation.navigate('Login');
 
     } catch (error) {
       Alert.alert('Sign Up Failed', 'An error occurred while creating your account. Please try again.');
+      console.log(error);
     } finally {
       setIsLoading(false);
     }

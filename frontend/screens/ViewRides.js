@@ -44,6 +44,7 @@ export default function ViewRides({ navigation }) {
     fetchRides();
   }, []);
 
+  console.log(rides);
   return (
     <View style={{ flex: 1, paddingTop: 40, paddingHorizontal: 16, backgroundColor: '#fff' }}>
       <Text style={styles.title}>My Posted Rides</Text>

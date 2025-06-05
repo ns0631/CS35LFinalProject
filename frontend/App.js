@@ -6,7 +6,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 //import FirstPage from './screens/FirstPage';
 import Login from './screens/Login';
 import Signup from './screens/Signup.js';
-import EmailVerification from './screens/EmailVerification';
 import HomeScreen from './screens/HomeScreen';
 import ShareRide from './screens/ShareRide';
 import FindRide from './screens/FindRide';

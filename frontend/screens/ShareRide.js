@@ -178,6 +178,7 @@ export default function ShareRide({ navigation }) {
           destination: dropoffValidation.formattedAddress,
           timeLeaving: date,
           driver: driverId,
+          capacity: capacity,
         })
       });
       
