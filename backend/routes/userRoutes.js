@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 function authenticateToken(req, res, next) {
     console.log('--- Incoming request to protected user endpoint ---');
     console.log('Request path:', req.path);
-    console.log('Headers:', req.headers);
     const token = req.headers.authorization;
     if(token == null){
         console.log("JWT missing");
@@ -26,10 +25,7 @@ const router = express.Router();
 router.put('/signup', createUser);
 router.delete('/deleteaccount', deleteUser);
 router.post('/login', verifyUser);
-router.post('/editprofile', authenticateToken, (req, res, next) => {
-    console.log('POST /users/editprofile body:', req.body);
-    next();
-}, updateUser);
+router.post('/editprofile', authenticateToken, updateUser);
 
 // Rating endpoints
 router.get('/:id', getUserById);

@@ -73,6 +73,7 @@ export default function ViewProfile({ navigation, route }) {
       </View>
     );
   }
+  console.log(profile.phone);
   return (
     <View style={styles.container}>
       <View style={styles.profileCard}>
@@ -82,6 +83,7 @@ export default function ViewProfile({ navigation, route }) {
         />
         <Text style={styles.name}>{profile.firstName} {profile.lastName}</Text>
         <Text style={styles.email}>Email: {profile.email}</Text>
+        <Text style={styles.email}>Phone: {profile.phone ? profile.phone : "Not given"}</Text>
         <View style={{ alignItems: 'center', marginVertical: 12 }}>
           <Text style={{ fontSize: 18, marginBottom: 4 }}>Average Rating:</Text>
           <StarRating rating={Number(average) || 0} setRating={() => {}} disabled={true} />

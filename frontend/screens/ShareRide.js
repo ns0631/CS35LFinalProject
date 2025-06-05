@@ -102,6 +102,7 @@ export default function ShareRide({ navigation }) {
   const [pickup, setPickup] = useState('');
   const [dropoff, setDropoff] = useState('');
   const [date, setDate] = useState(new Date());
+  const [capacity, setCapacity] = useState(3);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isApiKeyValid, setIsApiKeyValid] = useState(false);
 
@@ -130,6 +131,11 @@ export default function ShareRide({ navigation }) {
   const handleSubmit = async () => {
     if (!pickup || !dropoff) {
       Alert.alert('Error', 'Please enter both pickup and dropoff locations');
+      return;
+    }
+
+    if(!capacity){
+      Alert.alert('Error', 'Please enter your car capacity.');
       return;
     }
 
@@ -238,6 +244,17 @@ export default function ShareRide({ navigation }) {
             onChange={onChangeDate}
           />
         )}
+      </View>
+
+      <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Capacity</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 3"
+            keyboardType="numeric"
+            value={capacity}
+            onChangeText={setCapacity}
+          />
       </View>
 
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>

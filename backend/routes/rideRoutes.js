@@ -24,10 +24,7 @@ function authenticateToken(req, res, next) {
 
 const router = express.Router();
 
-router.post('/create', authenticateToken, (req, res, next) => {
-    console.log('POST /rides/create body:', req.body);
-    next();
-}, createRide);
+router.post('/create', authenticateToken, createRide);
 router.post('/getRides', authenticateToken, getRidesAfterDate);
 router.get('/myrides', authenticateToken, getMyRides);
 router.get('/', getAllRides);

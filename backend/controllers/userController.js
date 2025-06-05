@@ -102,7 +102,8 @@ export const rateUser = async (req, res) => {
     try {
         const raterId = req.user && req.user.username ? req.user.username : null;
         const ratedUserId = req.params.id;
-        const { value } = req.body;
+        const value = req.body.value;
+        
         if (!value || value < 1 || value > 5) {
             return res.status(400).json({ success: false, message: 'Rating value must be 1-5' });
         }

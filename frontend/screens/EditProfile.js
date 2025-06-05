@@ -230,13 +230,14 @@ export default function EditProfile({ navigation }) {
                   
                 ]}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={() => {}}
                 placeholder="your.name@ucla.edu"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
                 placeholderTextColor="#A9A9A9"
                 disabled={true}
+                editable={false}
               />
             {email && !isValidUCLAEmail(email) && (
               <Text style={styles.errorText}>Must be a valid UCLA email (@ucla.edu or @g.ucla.edu)</Text>

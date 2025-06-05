@@ -7,7 +7,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function FindRide2({ navigation, route }) {
   const handleJoin = (rideID) => {
-    console.log("here");
       Alert.alert(
         'Join Ride',
         'Are you sure you want to join this ride?',
@@ -29,7 +28,6 @@ export default function FindRide2({ navigation, route }) {
                   },
                   body: JSON.stringify({userId: userData._id})
               });
-              console.log(serverResponse);
               if(serverResponse.status == 200){
                 Alert.alert(
                   'Ride joined',
@@ -42,7 +40,6 @@ export default function FindRide2({ navigation, route }) {
                   ]
                 );
               } else{
-                console.log("here");
                 let errormessage;
                 switch(serverResponse.status){
                   case 400:
@@ -58,7 +55,6 @@ export default function FindRide2({ navigation, route }) {
                     errormessage = "Ride is full.";
                     break;
                 }
-                console.log(serverResponse.message);
                 Alert.alert(
                   'Ride join failed',
                   errormessage,
