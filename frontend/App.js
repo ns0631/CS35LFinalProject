@@ -90,11 +90,6 @@ const AuthStack = () => (
       component={Signup} 
       options={{ headerShown: false }}
     />
-    <Stack.Screen 
-      name="EmailVerification" 
-      component={EmailVerification} 
-      options={{ headerShown: false }}
-    />
   </Stack.Navigator>
 );
 
