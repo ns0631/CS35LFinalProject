@@ -1,0 +1,5 @@
+# Ignore environment variable files
+.env
+*.env
+
+# Add any other files/folders you want to ignore below
